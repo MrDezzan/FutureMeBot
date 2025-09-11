@@ -9,12 +9,6 @@ bot = telebot.TeleBot(BOT_TOKEN)
 db = DBManager()
 gigachat = GigaChatAPI()
 
-
-
-
-
-
-
 def main_menu():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton("👤 Мой профиль")
@@ -26,12 +20,6 @@ def main_menu():
     return markup
 
 
-
-
-
-
-
-
 @bot.message_handler(commands=['start'])
 def start(message):
     text = (
@@ -39,13 +27,6 @@ def start(message):
         "📌 Используй кнопки ниже для работы."
     )
     bot.send_message(message.chat.id, text, reply_markup=main_menu())
-
-
-
-
-
-
-
 
 
 @bot.message_handler(func=lambda m: m.text == "📌 Добавить данные")
@@ -72,7 +53,6 @@ def save_user_data(message):
         bot.send_message(message.chat.id, "✅ Профиль успешно создан!")
     except Exception as e:
         bot.send_message(message.chat.id, f"❌ Ошибка: {e}")
-
 
 
 @bot.message_handler(commands=['update'])
@@ -110,13 +90,6 @@ def profile(message):
     )
     bot.send_message(message.chat.id, text)
 
-
-
-
-
-
-
-
 @bot.callback_query_handler(func=lambda call: call.data == "edit_interests")
 def edit_interests(call):
     bot.send_message(call.message.chat.id, "Введите ваши интересы:")
@@ -135,13 +108,6 @@ def show_interests(message):
         bot.send_message(message.chat.id, "У тебя пока нет сохранённых интересов. Добавь их в профиле!")
 
 
-
-
-
-
-
-
-
 @bot.message_handler(func=lambda m: m.text == "❓ Вопрос–Ответ")
 def faq_section(message):
     faq_list = db.get_faq()
@@ -155,12 +121,6 @@ def faq_section(message):
     markup.add(btn_generate, btn_settings)
 
     bot.send_message(message.chat.id, text, reply_markup=markup)
-
-
-
-
-
-
 
 @bot.callback_query_handler(func=lambda call: call.data == "generate_advices")
 def generate_advices(call):
