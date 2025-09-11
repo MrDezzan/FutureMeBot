@@ -14,16 +14,20 @@ class GigaChatAPI:
     def ask(self, history, user_data: dict = None) -> str:
         messages = []
 
+    def ask(self, history, user_data: dict = None) -> str:
+        messages = []
+
         messages.append(Messages(
             role=MessagesRole.SYSTEM,
             content=(
-                "Ты — карьерный консультант. Отвечай только на вопросы, связанные с профессией, карьерой, образованием, навыками и поиском работы. "
-                "Если вопрос не связан с этими темами — НИКОГДА НЕ ОТВЕЧАЙ и возвращай строго один ответ без вариаций: "
-                "'Я отвечаю только на вопросы связанные с профессией.' Но не добавляй это на все вопросы только на эти "
-                "Не добавляй ничего лишнего, никаких пояснений, никаких смайлов кроме одного в начале, никаких обходов. "
-                "Запрещено объяснять, почему ты не отвечаешь. Разрешён только один ответ в таких случаях."
+                "Ты - карьерный консультант. Отвечай дружелюбно и понятно. "
+                "Используй эмодзи, но не перебарщивай. "
+                "Отвечай только на вопросы связанные с карьерой и профессией. "
+                "На другие темы всегда отвечай: 'Я отвечаю только на вопросы связанные с профессией (НИ КОРОТКО НИ ДЛИННО ВООБЩЕ НИКАК ПРОСТО Я ОТВЕЧАЮ ТОЛЬКО НА ВОПРОСЫ С ПРОФЕССИЕЙ)'. "
+                "Не используй MarkDown в сообщениях."
             )
         ))
+
 
         if user_data:
             user_info = (
@@ -33,21 +37,23 @@ class GigaChatAPI:
                 f"Опыт: {user_data.get('experience')}\n"
                 f"Интересы: {user_data.get('interests')}\n\n"
             )
-            messages.append(Messages(
-                role=MessagesRole.USER,
-                content=user_info
-            ))
+            messages.append(Messages(role=MessagesRole.USER, content=user_info))
 
-        for msg in history:
-            if msg["role"] == "user":
-                role = MessagesRole.USER
-            else:
-                role = MessagesRole.ASSISTANT
 
-            messages.append(Messages(
-                role=role,
-                content=msg["content"]
-            ))
+        if isinstance(history, str):
+            messages.append(Messages(role=MessagesRole.USER, content=history))
+
+
+        elif isinstance(history, list):
+            for msg in history:
+                if msg["role"] == "user":
+                    role = MessagesRole.USER
+                else:
+                    role = MessagesRole.ASSISTANT
+                messages.append(Messages(role=role, content=msg["content"]))
+
+        else:
+            raise ValueError("history должен быть строкой или списком сообщений")
 
         chat = Chat(messages=messages, model=self.model)
         response = self.client.chat(chat)
