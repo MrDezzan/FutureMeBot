@@ -15,8 +15,10 @@ def main_menu():
     btn2 = types.KeyboardButton("📌 Добавить данные")
     btn3 = types.KeyboardButton("⭐ Мои интересы")
     btn4 = types.KeyboardButton("❓ Вопрос–Ответ")
+    btn5 = types.KeyboardButton("🎯 Выбрать профессию")
     markup.add(btn1, btn2)
     markup.add(btn3, btn4)
+    markup.add(btn5)
     return markup
 
 
@@ -25,6 +27,7 @@ def start(message):
     text = (
         "👋 Привет! Это FutureMe - бот помощник в выборе профессии.\n\n"
         "📌 Используй кнопки ниже для работы."
+        "Версия: beta 3"
     )
     bot.send_message(message.chat.id, text, reply_markup=main_menu())
 
@@ -53,6 +56,65 @@ def save_user_data(message):
         bot.send_message(message.chat.id, "✅ Профиль успешно создан!")
     except Exception as e:
         bot.send_message(message.chat.id, f"❌ Ошибка: {e}")
+
+@bot.message_handler(func=lambda m: m.text == "🎯 Выбрать профессию")
+def start_career_test(message):
+    db.init_career_progress(message.chat.id)
+    send_career_question(message.chat.id, 1)
+
+def send_career_question(chat_id, qid):
+    qdata = db.get_career_question(qid)
+    if not qdata:
+        finish_career_test(chat_id)
+        return
+    text = f"❓ {qdata['question']}"
+    markup = types.InlineKeyboardMarkup()
+    for oid, opt_text in qdata["options"]:
+        markup.add(types.InlineKeyboardButton(opt_text, callback_data=f"career_opt:{qid}:{oid}"))
+    bot.send_message(chat_id, text, reply_markup=markup)
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("career_opt:"))
+def handle_career_answer(call):
+    _, qid, oid = call.data.split(":")
+    qid, oid = int(qid), int(oid)
+
+    progress = db.get_progress(call.message.chat.id)
+    if not progress:
+        return
+
+    with db.connect() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT career_ids FROM career_options WHERE id = ?", (oid,))
+        row = cursor.fetchone()
+        if row and row[0]:
+            new_ids = [int(x) for x in row[0].split(",") if x.isdigit()]
+            selected = list(set(progress["selected_careers"] + new_ids))
+        else:
+            selected = progress["selected_careers"]
+
+    next_q = qid + 1
+    db.update_progress(call.message.chat.id, next_q, selected)
+
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    send_career_question(call.message.chat.id, next_q)
+
+def finish_career_test(chat_id):
+    progress = db.get_progress(chat_id)
+    if not progress:
+        bot.send_message(chat_id, "⚠ Ошибка: нет прогресса.")
+        return
+
+    ids = list(set(progress["selected_careers"]))
+    if not ids:
+        bot.send_message(chat_id, "😕 К сожалению, профессий не найдено.")
+    else:
+        careers = db.get_career_by_ids(ids)
+        text = "🔥 Тебе могут подойти такие профессии:\n\n"
+        for name, url in careers:
+            text += f"💼 {name}\n🔗 {url}\n\n"
+        bot.send_message(chat_id, text)
+
+    db.clear_progress(chat_id)
 
 
 @bot.message_handler(commands=['update'])
