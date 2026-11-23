@@ -62,9 +62,35 @@
 
 - Подростки, которые выбирают первую профессию.  
 - Люди, которые устали от своей работы и хотят сменить сферу.  
-- Все, кто ищет новые пути в жизни.  
+- Все, кто ищет новые пути в жизни.
 
+---
 
+## 🛠 Для разработчиков
 
+**Стек:** Python, pyTelegramBotAPI (`telebot`), SQLite, GigaChat API.
 
+**Файлы:**
+- `main.py` — запуск бота, меню и обработчики
+- `api.py` — обёртка над GigaChat
+- `db.py` — работа с базой SQLite (таблицы создаются при первом запуске)
+- `config.py` — токены и настройки
+
+**Запуск:**
+
+```bash
+pip install pyTelegramBotAPI gigachat
+```
+
+Заполни `config.py` своими значениями:
+
+```python
+BOT_TOKEN = "токен от @BotFather"
+CLIENT_SECRET = "ключ GigaChat"
+MODEL = "GigaChat"
+```
+
+```bash
+python main.py
+```
 
